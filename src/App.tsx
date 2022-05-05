@@ -1,7 +1,10 @@
 import { Redirect, Route } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import Home from './pages/Home';
+import { Zeroconf } from '@awesome-cordova-plugins/zeroconf'
+import { InAppBrowser } from '@awesome-cordova-plugins/in-app-browser'
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -24,19 +27,51 @@ import './theme/variables.css';
 
 setupIonicReact();
 
-const App: React.FC = () => (
-  <IonApp>
-    <IonReactRouter>
-      <IonRouterOutlet>
-        <Route exact path="/home">
-          <Home />
-        </Route>
-        <Route exact path="/">
-          <Redirect to="/home" />
-        </Route>
-      </IonRouterOutlet>
-    </IonReactRouter>
-  </IonApp>
-);
+const App: React.FC = () => {
+  const [servers, setServers] = useState<string[]>([]);
+
+  useEffect(()=>{
+    Zeroconf.watch('_http._tcp.', 'local.').subscribe(result => {
+      let ip = result.service.ipv4Addresses[0];
+      let port = result.service.port;
+      let url = `http://${ip}:${port}`;
+      
+      if (result.action == 'added') {
+        console.log('service added', result.service);
+      }
+      else if (result.action == 'resolved') {
+          console.log('service resolved', result.service);
+          if(servers.indexOf(url) === -1)  {
+            setServers([...servers, url])
+          }
+      } else {
+        console.log('service removed', result.service);
+      }
+    });
+  },[])
+
+  useEffect(()=>{
+    if(servers[0]){
+      InAppBrowser.create(servers[0], '_self', {
+        location: 'no',
+      })
+    }
+  },[servers])
+
+  return (
+    <IonApp>
+      <IonReactRouter>
+        <IonRouterOutlet>
+          <Route exact path="/home">
+            <Home />
+          </Route>
+          <Route exact path="/">
+            <Redirect to="/home" />
+          </Route>
+        </IonRouterOutlet>
+      </IonReactRouter>
+    </IonApp>
+  )
+};
 
 export default App;
