@@ -1,0 +1,7 @@
+{
+  "name": "icarus-mobile",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}
