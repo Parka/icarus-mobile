@@ -5,6 +5,7 @@ import { IonReactRouter } from '@ionic/react-router';
 import Home from './pages/Home';
 import { Zeroconf } from '@awesome-cordova-plugins/zeroconf'
 import { InAppBrowser } from '@awesome-cordova-plugins/in-app-browser'
+import { ScreenOrientation } from '@awesome-cordova-plugins/screen-orientation';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -52,9 +53,14 @@ const App: React.FC = () => {
 
   useEffect(()=>{
     if(servers[0]){
-      InAppBrowser.create(servers[0], '_self', {
+      const browserRef = InAppBrowser.create(servers[0], '_self', {
         location: 'no',
+        zoom: 'no',
       })
+      browserRef.on('exit').subscribe( () =>
+        ScreenOrientation.unlock()
+      )
+      ScreenOrientation.lock(ScreenOrientation.ORIENTATIONS.LANDSCAPE)
     }
   },[servers])
 
